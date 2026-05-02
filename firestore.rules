@@ -1,0 +1,26 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Reglas maestras para ROCA 2026
+    
+    // Permite acceso a todo mientras solucionamos la vinculación
+    match /{document=**} {
+      allow read, write: if true;
+    }
+
+    // DigiBird Leaderboard
+    match /digibird_leaderboard/{scoreId} {
+      allow read: if true;
+      allow create: if request.resource.data.name is string 
+                    && request.resource.data.name.size() <= 50
+                    && request.resource.data.score is int
+                    && request.resource.data.timestamp == request.time;
+      allow update, delete: if false;
+    }
+
+    // Explicitamente para la ruta que fallaba
+    match /matches/{matchId}/votes/{voteId} {
+      allow read, write: if true;
+    }
+  }
+}

@@ -1,0 +1,88 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Note: This app uses client-side password management for admin actions
+    // but for Firebase security, we'll allow public writes for now as requested
+    // but with structural validation to prevent abuse.
+    
+    // --- Validation Blueprints ---
+
+    function isValidPlayer(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 100
+          && (data.photoUrl == null || (data.photoUrl is string && data.photoUrl.size() <= 500))
+          && (data.email == null || (data.email is string && data.email.size() <= 100))
+          && data.stats is map
+          && data.stats.pj is int
+          && data.stats.pg is int
+          && data.stats.pp is int
+          && data.stats.pe is int
+          && data.stats.points is int
+          && data.stats.goals is int
+          && data.stats.motm is int;
+    }
+
+    function isValidMatch(data) {
+      return data.date is string && data.date.size() <= 50
+          && data.teamClaro is list && data.teamClaro.size() <= 15
+          && data.teamOscuro is list && data.teamOscuro.size() <= 15
+          && data.claroScore is int
+          && data.oscuroScore is int
+          && data.result in ['claro', 'oscuro', 'draw']
+          && data.goals is map;
+    }
+
+    function isValidVote(data) {
+      return data.voterName is string && data.voterName.size() > 0 && data.voterName.size() <= 50
+          && data.votedFor is string && data.votedFor.size() > 0 && data.votedFor.size() <= 50
+          && data.timestamp is timestamp;
+    }
+
+    // --- Collection Matches ---
+
+    match /players/{playerId} {
+      allow read: if true;
+      allow write: if isValidId(playerId) && isValidPlayer(incoming());
+    }
+
+    match /matches/{matchId} {
+      allow read: if true;
+      allow write: if isValidId(matchId) && isValidMatch(incoming());
+
+      match /votes/{voteId} {
+        allow read: if true;
+        allow create: if isValidId(voteId) && isValidVote(incoming());
+        // Do not allow updating or deleting votes from client for now
+        allow update, delete: if false;
+      }
+    }
+
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isValidId(settingId);
+    }
+  }
+}

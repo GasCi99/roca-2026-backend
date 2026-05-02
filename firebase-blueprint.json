@@ -1,0 +1,133 @@
+{
+  "entities": {
+    "Player": {
+      "title": "Player",
+      "description": "A player in the ROCA 2026 league",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Full name of the player"
+        },
+        "photoUrl": {
+          "type": "string",
+          "description": "URL to the player's photo"
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the player"
+        },
+        "stats": {
+          "type": "object",
+          "properties": {
+            "pj": { "type": "integer", "description": "Partidos Jugados" },
+            "pg": { "type": "integer", "description": "Partidos Ganados" },
+            "pp": { "type": "integer", "description": "Partidos Perdidos" },
+            "pe": { "type": "integer", "description": "Partidos Empatados" },
+            "points": { "type": "integer", "description": "Total points" },
+            "goals": { "type": "integer", "description": "Total goals scored" },
+            "motm": { "type": "integer", "description": "Man of the Match awards" }
+          },
+          "required": ["pj", "pg", "pp", "pe", "points", "goals", "motm"]
+        }
+      },
+      "required": ["name", "photoUrl", "stats"]
+    },
+    "Match": {
+      "title": "Match",
+      "description": "A football match result",
+      "type": "object",
+      "properties": {
+        "date": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO date of the match"
+        },
+        "teamClaro": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of player names in Team Claro"
+        },
+        "teamOscuro": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of player names in Team Oscuro"
+        },
+        "claroScore": {
+          "type": "integer",
+          "description": "Score of Team Claro"
+        },
+        "oscuroScore": {
+          "type": "integer",
+          "description": "Score of Team Oscuro"
+        },
+        "result": {
+          "type": "string",
+          "enum": ["claro", "oscuro", "draw"],
+          "description": "Winner of the match"
+        },
+        "motm": {
+          "type": "string",
+          "description": "Name of the Man of the Match"
+        },
+        "goals": {
+          "type": "object",
+          "description": "Map of player names to goals scored in this match"
+        },
+        "votingClosed": {
+          "type": "boolean",
+          "description": "Whether voting for MOTM is closed"
+        }
+      },
+      "required": ["date", "teamClaro", "teamOscuro", "claroScore", "oscuroScore", "result", "goals"]
+    },
+    "Vote": {
+      "title": "Vote",
+      "description": "A vote for Player of the Match",
+      "type": "object",
+      "properties": {
+        "voterName": { "type": "string" },
+        "votedFor": { "type": "string" },
+        "timestamp": { "type": "object", "description": "Firestore Timestamp object" }
+      },
+      "required": ["voterName", "votedFor", "timestamp"]
+    },
+    "DigiBirdScore": {
+      "title": "DigiBird Score",
+      "description": "A high score in the DigiBird game",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "score": { "type": "integer" },
+        "timestamp": { "type": "object", "description": "Firestore Timestamp object" }
+      },
+      "required": ["name", "score", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/players/{playerId}": {
+      "schema": "Player",
+      "description": "Collection of players"
+    },
+    "/matches/{matchId}": {
+      "schema": "Match",
+      "description": "Collection of match results"
+    },
+    "/matches/{matchId}/votes/{voteId}": {
+      "schema": "Vote",
+      "description": "Votes for a specific match"
+    },
+    "/settings/pozo": {
+      "schema": { "type": "object", "properties": { "amount": { "type": "number" }, "updatedAt": { "type": "string" } } },
+      "description": "Current accumulated jackpot"
+    },
+    "/settings/potm": {
+      "schema": { "type": "object", "properties": { "playerId": { "type": "string" } } },
+      "description": "Player of the month ID"
+    },
+    "/digibird_leaderboard/{scoreId}": {
+      "schema": "DigiBirdScore",
+      "description": "Global records for DigiBird game"
+    }
+  }
+}
